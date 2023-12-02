@@ -1,0 +1,186 @@
+const { Sequelize, DataTypes } = require('sequelize');
+const sequelize = new Sequelize('your_database', 'your_username', 'your_password', {
+  host: 'localhost',
+  dialect: 'mysql',
+});
+
+// Define Customer, Orders, OrderDetails models
+const Customer = sequelize.define('Customer', {
+  // Define Customer model fields
+});
+
+const Order = sequelize.define('Order', {
+  // Define Order model fields
+});
+
+const OrderDetails = sequelize.define('OrderDetails', {
+  // Define OrderDetails model fields
+});
+
+// Define associations (JOINS)
+Customer.hasMany(Order);
+Order.belongsTo(Customer);
+Order.hasMany(OrderDetails);
+OrderDetails.belongsTo(Order);
+
+
+// Implement SELECT, INSERT, UPDATE, DELETE operations here
+// Example: SELECT operation
+const getCustomers = async () => {
+  const customers = await Customer.findAll();
+  return customers;
+};
+
+
+
+const mongoose = require('mongoose');
+mongoose.connect('mongodb://localhost/your_mongodb_database', { useNewUrlParser: true, useUnifiedTopology: true });
+
+// Define Books, Authors, Reviews schemas and models
+const bookSchema = new mongoose.Schema({
+  // Define Book schema fields
+});
+
+const authorSchema = new mongoose.Schema({
+  // Define Author schema fields
+});
+
+const reviewSchema = new mongoose.Schema({
+  // Define Review schema fields
+});
+
+const Book = mongoose.model('Book', bookSchema);
+const Author = mongoose.model('Author', authorSchema);
+const Review = mongoose.model('Review', reviewSchema);
+
+
+
+// Implement CRUD operations for Books, Authors, Reviews collections here
+// Example: CREATE operation
+const createBook = async (bookData) => {
+  const newBook = new Book(bookData);
+  await newBook.save();
+};
+
+
+const express = require('express');
+const app = express();
+const port = 3000;
+
+// Add middleware and configurations here
+// Define routes for CRUD operations on both SQL and MongoDB
+// Example: SQL route for getting customers
+app.get('/customers', async (req, res) => {
+  const customers = await getCustomers();
+  res.json(customers);
+});
+
+// Connect to SQL database for transactional operations
+// Connect to MongoDB for non-transactional operations
+// Example: Connect to MongoDB
+mongoose.connection.on('connected', () => {
+  console.log('Connected to MongoDB');
+});
+
+// Use Async/Await for asynchronous operations
+// Implement error handling middleware
+// Example: Async/Await
+app.get('/customers', async (req, res) => {
+  try {
+    const customers = await getCustomers();
+    res.json(customers);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+
+// When a customer places an order, store details in the SQL database
+// Store and retrieve book details and reviews from MongoDB
+// Example: Order placement
+app.post('/place-order', async (req, res) => {
+  try {
+    // Store order details in SQL
+    // Retrieve book details and reviews from MongoDB
+    res.json({ message: 'Order placed successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// Implement transaction handling in SQL for order processing
+// Example: Transaction handling
+app.post('/place-order', async (req, res) => {
+  const transaction = await sequelize.transaction();
+  
+  try {
+    // SQL operations within the transaction
+    await Customer.create({ /* customer data */ }, { transaction });
+    await Order.create({ /* order data */ }, { transaction });
+    await OrderDetails.create({ /* order details data */ }, { transaction });
+
+    // Commit the transaction
+    await transaction.commit();
+
+    // MongoDB operations outside the transaction
+    // Retrieve book details and reviews from MongoDB
+
+    res.json({ message: 'Order placed successfully' });
+  } catch (error) {
+    // Rollback the transaction in case of an error
+    await transaction.rollback();
+
+    console.error(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// Use MongoDB's aggregation framework for reports
+// Example: Top-selling books report
+app.get('/top-selling-books', async (req, res) => {
+  try {
+    const topSellingBooks = await Book.aggregate([
+      { $group: { _id: '$title', totalSales: { $sum: '$sales' } } },
+      { $sort: { totalSales: -1 } },
+    ]);
+
+    res.json(topSellingBooks);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+
+// Implement input validation to prevent SQL injections, etc.
+// Example: Input validation middleware
+const validateInput = (req, res, next) => {
+  // Validate and sanitize input
+  next();
+};
+
+app.use(validateInput);
+
+// Write unit tests using Mocha and Chai for both SQL and MongoDB operations
+// Example: Mocha and Chai test for SQL SELECT operation
+const chai = require('chai');
+const chaiHttp = require('chai-http');
+const expect = chai.expect;
+
+chai.use(chaiHttp);
+
+describe('SQL Operations', () => {
+  it('should get customers from the database', (done) => {
+    chai.request(app)
+      .get('/customers')
+      .end((err, res) => {
+        expect(res).to.have.status(200);
+        expect(res.body).to.be.an('array');
+        done();
+      });
+  });
+});
+
+
